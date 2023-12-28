@@ -1,67 +1,104 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"html/template"
-	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/dchupp/snippetbox/internal/models"
 )
 
-func home(w http.ResponseWriter, r *http.Request) {
+func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
 	}
+	snippets, err := app.snippets.Latest()
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 
+	for _, snippet := range snippets {
+		fmt.Fprintf(w, "%+v\n", snippet)
+	}
 	// Initialize a slice containing the paths to the two files. It's important
 	// to note that the file containing our base template must be the *first*
 	// file in the slice.
-	files := []string{
-		"../../internal/ui/html/base.tmpl",
-		"../../internal/ui/html/pages/home.tmpl",
-		"../../internal//ui/html/partials/nav.tmpl",
-	}
-	// Use the template.ParseFiles() function to read the template file into a
-	// template set. If there's an error, we log the detailed error message and use
-	// the http.Error() function to send a generic 500 Internal Server Error
-	// response to the user. Note that we use the net/http constant
-	// http.StatusInternalServerError here instead of the integer 500 directly.
+	// files := []string{
+	// 	"../../ui/html/base.tmpl",
+	// 	"../../ui/html/pages/home.tmpl",
+	// 	"../../ui/html/partials/nav.tmpl",
+	// }
+	// // Use the template.ParseFiles() function to read the template file into a
+	// // template set. If there's an error, we log the detailed error message and use
+	// // the http.Error() function to send a generic 500 Internal Server Error
+	// // response to the user. Note that we use the net/http constant
+	// // http.StatusInternalServerError here instead of the integer 500 directly.
 
-	ts, err := template.ParseFiles(files...)
-	if err != nil {
-		log.Print(err.Error())
+	// ts, err := template.ParseFiles(files...)
+	// if err != nil {
+	// 	app.logger.Error(err.Error(), "method", r.Method, "uri", r.URL.RequestURI())
 
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	// 	app.serverError(w, r, err) // Use the serverError() helper.
+	// 	return
+	// }
 
-	// Then we use the Execute() method on the template set to write the
-	// template content as the response body. The last parameter to Execute()
-	// represents any dynamic data that we want to pass in, which for now we'll
-	// leave as nil.
-	err = ts.ExecuteTemplate(w, "base", nil)
-	if err != nil {
-		log.Print(err.Error())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	}
+	// // Then we use the Execute() method on the template set to write the
+	// // template content as the response body. The last parameter to Execute()
+	// // represents any dynamic data that we want to pass in, which for now we'll
+	// // leave as nil.
+	// err = ts.ExecuteTemplate(w, "base", nil)
+	// if err != nil {
+	// 	log.Print(err.Error())
+	// 	app.serverError(w, r, err) // Use the serverError() helper.
+	// }
 }
-func snippetView(w http.ResponseWriter, r *http.Request) {
+func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil || id < 1 {
-		http.NotFound(w, r)
+		app.notFound(w)
 		return
 	}
 
-	fmt.Fprintf(w, "Display a specific snippet with ID %d...", id)
-}
-func snippetCreate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		w.Header().Set("Allow", "POST")
-		// w.WriteHeader(http.StatusMethodNotAllowed)
-		// w.Write([]byte("method not allowed"))
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+	// Use the SnippetModel's Get() method to retrieve the data for a
+	// specific record based on its ID. If no matching record is found,
+	// return a 404 Not Found response.
+	snippet, err := app.snippets.Get(id)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(w)
+		} else {
+			app.serverError(w, r, err)
+		}
 		return
 	}
-	w.Write([]byte("Hello from snippet create"))
+
+	// Write the snippet data as a plain-text HTTP response body.
+	fmt.Fprintf(w, "%+v", snippet)
+}
+func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Allow", http.MethodPost)
+		app.clientError(w, http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Create some variables holding dummy data. We'll remove these later on
+	// during the build.
+	title := "O snail"
+	content := "O snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n– Kobayashi Issa"
+	expires := 7
+
+	// Pass the data to the SnippetModel.Insert() method, receiving the
+	// ID of the new record back.
+	id, err := app.snippets.Insert(title, content, expires)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// Redirect the user to the relevant page for the snippet.
+	http.Redirect(w, r, fmt.Sprintf("/snippet/view?id=%d", id), http.StatusSeeOther)
 }
