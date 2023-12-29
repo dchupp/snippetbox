@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"text/template"
 
 	"github.com/dchupp/snippetbox/internal/models"
 )
@@ -19,41 +20,33 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, r, err)
 		return
 	}
-
-	for _, snippet := range snippets {
-		fmt.Fprintf(w, "%+v\n", snippet)
-	}
 	// Initialize a slice containing the paths to the two files. It's important
 	// to note that the file containing our base template must be the *first*
 	// file in the slice.
-	// files := []string{
-	// 	"../../ui/html/base.tmpl",
-	// 	"../../ui/html/pages/home.tmpl",
-	// 	"../../ui/html/partials/nav.tmpl",
-	// }
-	// // Use the template.ParseFiles() function to read the template file into a
-	// // template set. If there's an error, we log the detailed error message and use
-	// // the http.Error() function to send a generic 500 Internal Server Error
-	// // response to the user. Note that we use the net/http constant
-	// // http.StatusInternalServerError here instead of the integer 500 directly.
+	files := []string{
+		"../../ui/html/base.go.tmpl",
+		"../../ui/html/pages/home.go.tmpl",
+		"../../ui/html/partials/nav.go.tmpl",
+	}
 
-	// ts, err := template.ParseFiles(files...)
-	// if err != nil {
-	// 	app.logger.Error(err.Error(), "method", r.Method, "uri", r.URL.RequestURI())
+	ts, err := template.ParseFiles(files...)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 
-	// 	app.serverError(w, r, err) // Use the serverError() helper.
-	// 	return
-	// }
+	// Create an instance of a templateData struct holding the slice of
+	// snippets.
+	data := templateData{
+		Snippets: snippets,
+	}
 
-	// // Then we use the Execute() method on the template set to write the
-	// // template content as the response body. The last parameter to Execute()
-	// // represents any dynamic data that we want to pass in, which for now we'll
-	// // leave as nil.
-	// err = ts.ExecuteTemplate(w, "base", nil)
-	// if err != nil {
-	// 	log.Print(err.Error())
-	// 	app.serverError(w, r, err) // Use the serverError() helper.
-	// }
+	// Pass in the templateData struct when executing the template.
+	err = ts.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
+
 }
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
@@ -62,9 +55,6 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Use the SnippetModel's Get() method to retrieve the data for a
-	// specific record based on its ID. If no matching record is found,
-	// return a 404 Not Found response.
 	snippet, err := app.snippets.Get(id)
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
@@ -75,8 +65,31 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Write the snippet data as a plain-text HTTP response body.
-	fmt.Fprintf(w, "%+v", snippet)
+	// Initialize a slice containing the paths to the view.tmpl file,
+	// plus the base layout and navigation partial that we made earlier.
+	files := []string{
+		"../../ui/html/base.go.tmpl",
+		"../../ui/html/partials/nav.go.tmpl",
+		"../../ui/html/pages/view.go.tmpl",
+	}
+
+	// Parse the template files...
+	ts, err := template.ParseFiles(files...)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	data := templateData{
+		Snippet: snippet,
+	}
+
+	// And then execute them. Notice how we are passing in the snippet
+	// data (a models.Snippet struct) as the final parameter?
+	err = ts.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 }
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
