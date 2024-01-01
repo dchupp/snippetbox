@@ -28,15 +28,8 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
-	// When httprouter is parsing a request, the values of any named parameters
-	// will be stored in the request context. We'll talk about request context
-	// in detail later in the book, but for now it's enough to know that you can
-	// use the ParamsFromContext() function to retrieve a slice containing these
-	// parameter names and values like so:
 	params := httprouter.ParamsFromContext(r.Context())
 
-	// We can then use the ByName() method to get the value of the "id" named
-	// parameter from the slice and validate it as normal.
 	id, err := strconv.Atoi(params.ByName("id"))
 	if err != nil || id < 1 {
 		app.notFound(w)
@@ -81,26 +74,18 @@ type snippetCreateForm struct {
 
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
 	var form snippetCreateForm
+
 	err := app.decodePostForm(r, &form)
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
 		return
 	}
-	// Because the Validator struct is embedded by the snippetCreateForm struct,
-	// we can call CheckField() directly on it to execute our validation checks.
-	// CheckField() will add the provided key and error message to the
-	// FieldErrors map if the check does not evaluate to true. For example, in
-	// the first line here we "check that the form.Title field is not blank". In
-	// the second, we "check that the form.Title field has a maximum character
-	// length of 100" and so on.
+
 	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
 	form.CheckField(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
 	form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
 	form.CheckField(validator.PermittedValue(form.Expires, 1, 7, 365), "expires", "This field must equal 1, 7 or 365")
 
-	// Use the Valid() method to see if any of the checks failed. If they did,
-	// then re-render the template passing in the form in the same way as
-	// before.
 	if !form.Valid() {
 		data := app.newTemplateData(r)
 		data.Form = form
@@ -113,6 +98,10 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 		app.serverError(w, r, err)
 		return
 	}
+
+	// Use the Put() method to add a string value ("Snippet successfully
+	// created!") and the corresponding key ("flash") to the session data.
+	app.sessionManager.Put(r.Context(), "flash", "Snippet successfully created!")
 
 	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
 }
