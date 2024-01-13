@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 
+	"github.com/dchupp/snippetbox/ui"
 	"github.com/julienschmidt/httprouter"
 	"github.com/justinas/alice"
 )
@@ -17,10 +18,11 @@ func (app *application) routes() http.Handler {
 	router.NotFound = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		app.notFound(w)
 	})
+	fileServer := http.FileServer(http.FS(ui.Files))
 
-	fileServer := http.FileServer(http.Dir("../../ui/static/"))
+	// fileServer := http.FileServer(http.Dir("../../ui/static/"))
 	dynamic := alice.New(app.sessionManager.LoadAndSave, noSurf, app.authenticate)
-	router.Handler(http.MethodGet, "/static/*filepath", http.StripPrefix("/static", fileServer))
+	router.Handler(http.MethodGet, "/static/*filepath", fileServer)
 
 	router.Handler(http.MethodGet, "/", dynamic.ThenFunc(app.home))
 	router.Handler(http.MethodGet, "/snippet/view/:id", dynamic.ThenFunc(app.snippetView))
