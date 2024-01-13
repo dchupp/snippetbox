@@ -19,6 +19,7 @@ func (app *application) routes() http.Handler {
 		app.notFound(w)
 	})
 	fileServer := http.FileServer(http.FS(ui.Files))
+	router.HandlerFunc(http.MethodGet, "/ping", ping)
 
 	// fileServer := http.FileServer(http.Dir("../../ui/static/"))
 	dynamic := alice.New(app.sessionManager.LoadAndSave, noSurf, app.authenticate)
