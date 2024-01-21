@@ -15,16 +15,11 @@ import (
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/dchupp/snippetbox/internal/models/mocks"
-	"github.com/dchupp/snippetbox/ui"
 	"github.com/go-playground/form/v4"
 )
 
 func newTestApplication(t *testing.T) *application {
 	// Create an instance of the template cache.
-	templateCache, err := ui.NewTemplateCache()
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	// And a form decoder.
 	formDecoder := form.NewDecoder()
@@ -41,7 +36,6 @@ func newTestApplication(t *testing.T) *application {
 		logger:         slog.New(slog.NewTextHandler(io.Discard, nil)),
 		snippets:       &mocks.SnippetModel{}, // Use the mock.
 		users:          &mocks.UserModel{},    // Use the mock.
-		templateCache:  templateCache,
 		formDecoder:    formDecoder,
 		sessionManager: sessionManager,
 	}
@@ -99,7 +93,7 @@ func (ts *testServer) get(t *testing.T, urlPath string) (int, http.Header, strin
 	return rs.StatusCode, rs.Header, string(body)
 }
 
-var csrfTokenRX = regexp.MustCompile(`<input type='hidden' name='csrf_token' value='(.+)'>`)
+var csrfTokenRX = regexp.MustCompile(`<input type=\"hidden\" name=\"csrf_token\" value=\"'(.+)\"/>`)
 
 func extractCSRFToken(t *testing.T, body string) string {
 	// Use the FindStringSubmatch method to extract the token from the HTML body.

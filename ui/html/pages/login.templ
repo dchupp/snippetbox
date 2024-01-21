@@ -1,0 +1,35 @@
+package ui
+
+import (
+	"github.com/dchupp/snippetbox/ui"
+	vm "github.com/dchupp/snippetbox/ui/viewModel"
+
+	// "slices"
+)
+
+templ LoginPage(data ui.TemplateData, login vm.UserLoginForm ) {
+	<form action="/user/login" method="POST" novalidate>
+		<!-- Include the CSRF token -->
+		<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+		for _, item := range login.Validator.NonFieldErrors {
+			<div class="error">{ item }</div>
+		}
+		<div>
+			<label>Email:</label>
+			if login.Validator.FieldErrors["email"] != "" {
+				<label class="error">{ login.Validator.FieldErrors["email"] }</label>
+			}
+			<input type="email" name="email" value={ login.Email }/>
+		</div>
+		<div>
+			<label>Password:</label>
+			if login.Validator.FieldErrors["password"] != "" {
+				<label class="error">{ login.Validator.FieldErrors["password"]  }</label>
+			}
+			<input type="password" name="password"/>
+		</div>
+		<div>
+			<input type="submit" value="Login"/>
+		</div>
+	</form>
+}

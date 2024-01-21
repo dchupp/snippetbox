@@ -11,6 +11,7 @@ import (
 	"github.com/dchupp/snippetbox/internal/validator"
 	layout "github.com/dchupp/snippetbox/ui/html/layouts"
 	page "github.com/dchupp/snippetbox/ui/html/pages"
+	vm "github.com/dchupp/snippetbox/ui/viewModel"
 
 	"github.com/julienschmidt/httprouter" // New import
 )
@@ -51,34 +52,22 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 
 	data := app.newTemplateData(r)
 	data.Snippet = snippet
-
-	app.render(w, r, http.StatusOK, "view.go.tmpl", data)
+	layout.MainLayout("View Snippet", data, page.ViewSnippetPage(data)).Render(context.Background(), w)
 }
 func ping(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
 }
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
-	data.Form = snippetCreateForm{
-		Expires: 365,
-	}
-	app.render(w, r, http.StatusOK, "create.go.tmpl", data)
-}
+	create := vm.CreateSnippetForm{}
+	create.Expires = 365
 
-// Define a snippetCreateForm struct to represent the form data and validation
-// errors for the form fields. Note that all the struct fields are deliberately
-// exported (i.e. start with a capital letter). This is because struct fields
-// must be exported in order to be read by the html/template package when
-// rendering the template.
-type snippetCreateForm struct {
-	Title   string `form:"title"`
-	Content string `form:"content"`
-	Expires int    `form:"expires"`
-	validator.Validator
+	layout.MainLayout("Create Snippet", data, page.CreateSnippet(data, create)).Render(context.Background(), w)
+
 }
 
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
-	var form snippetCreateForm
+	var form vm.CreateSnippetForm
 
 	err := app.decodePostForm(r, &form)
 	if err != nil {
@@ -93,8 +82,7 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 
 	if !form.Valid() {
 		data := app.newTemplateData(r)
-		data.Form = form
-		app.render(w, r, http.StatusUnprocessableEntity, "create.go.tmpl", data)
+		layout.MainLayout("Login", data, page.CreateSnippet(data, form)).Render(context.Background(), w)
 		return
 	}
 
@@ -111,21 +99,15 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
 }
 
-type userSignupForm struct {
-	Name                string `form:"name"`
-	Email               string `form:"email"`
-	Password            string `form:"password"`
-	validator.Validator `form:"-"`
-}
-
 func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
-	data.Form = userSignupForm{}
-	app.render(w, r, http.StatusOK, "signup.go.tmpl", data)
+	signup := vm.UserSignupForm{}
+	layout.MainLayout("Signup", data, page.SignUpPage(data, signup)).Render(context.Background(), w)
+
 }
 
 func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
-	var form userSignupForm
+	var form vm.UserSignupForm
 
 	err := app.decodePostForm(r, &form)
 	if err != nil {
@@ -141,8 +123,8 @@ func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
 
 	if !form.Valid() {
 		data := app.newTemplateData(r)
-		data.Form = form
-		app.render(w, r, http.StatusUnprocessableEntity, "signup.go.tmpl", data)
+		layout.MainLayout("Signup", data, page.SignUpPage(data, form)).Render(context.Background(), w)
+
 		return
 	}
 
@@ -154,8 +136,7 @@ func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
 			form.AddFieldError("email", "Email address is already in use")
 
 			data := app.newTemplateData(r)
-			data.Form = form
-			app.render(w, r, http.StatusUnprocessableEntity, "signup.go.tmpl", data)
+			layout.MainLayout("Signup", data, page.SignUpPage(data, form)).Render(context.Background(), w)
 		} else {
 			app.serverError(w, r, err)
 		}
@@ -171,20 +152,15 @@ func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 }
 
-type userLoginForm struct {
-	Email               string `form:"email"`
-	Password            string `form:"password"`
-	validator.Validator `form:"-"`
-}
-
 func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
-	data.Form = userLoginForm{}
-	app.render(w, r, http.StatusOK, "login.go.tmpl", data)
+	login := vm.UserLoginForm{}
+	layout.MainLayout("Login", data, page.LoginPage(data, login)).Render(context.Background(), w)
+
 }
 func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 	// Decode the form data into the userLoginForm struct.
-	var form userLoginForm
+	var form vm.UserLoginForm
 
 	err := app.decodePostForm(r, &form)
 	if err != nil {
@@ -201,8 +177,7 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 
 	if !form.Valid() {
 		data := app.newTemplateData(r)
-		data.Form = form
-		app.render(w, r, http.StatusUnprocessableEntity, "login.go.tmpl", data)
+		layout.MainLayout("Login", data, page.LoginPage(data, form)).Render(context.Background(), w)
 		return
 	}
 
@@ -211,11 +186,10 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 	id, err := app.users.Authenticate(form.Email, form.Password)
 	if err != nil {
 		if errors.Is(err, models.ErrInvalidCredentials) {
-			form.AddNonFieldError("Email or password is incorrect")
-
+			form.Validator.NonFieldErrors = append(form.Validator.NonFieldErrors, "Email or password is incorrect")
 			data := app.newTemplateData(r)
-			data.Form = form
-			app.render(w, r, http.StatusUnprocessableEntity, "login.go.tmpl", data)
+			layout.MainLayout("Login", data, page.LoginPage(data, form)).Render(context.Background(), w)
+
 		} else {
 			app.serverError(w, r, err)
 		}

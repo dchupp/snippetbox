@@ -1,0 +1,22 @@
+package ui
+
+import (
+	"github.com/dchupp/snippetbox/ui"
+	// "slices"
+	"strconv"
+)
+
+templ ViewSnippetPage(data ui.TemplateData) {
+	<div class="snippet">
+		<div class="metadata">
+			<strong>{ data.Snippet.Title }</strong>
+			<span>#{ strconv.Itoa(data.Snippet.ID) }</span>
+		</div>
+		<pre><code>{ data.Snippet.Content }</code></pre>
+		<div class="metadata">
+			<!-- Use the new template function here -->
+			<time>Created: { ui.HumanDate(data.Snippet.Created) }</time>
+			<time>Expires: { ui.HumanDate(data.Snippet.Expires) }</time>
+		</div>
+	</div>
+}

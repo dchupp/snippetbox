@@ -16,7 +16,7 @@ templ NavBar(data ui.TemplateData) {
 			if data.IsAuthenticated == true {
 				<form action="/user/logout" method="POST">
 					<!-- Include the CSRF token -->
-					<input type="hidden" name="csrf_token" value="{data.CSRFToken}"/>
+					<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
 					<button>Logout</button>
 				</form>
 			} else {

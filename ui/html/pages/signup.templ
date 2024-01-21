@@ -1,0 +1,39 @@
+package ui
+
+import (
+	"github.com/dchupp/snippetbox/ui"
+	vm "github.com/dchupp/snippetbox/ui/viewModel"
+
+	// "slices"
+)
+
+templ SignUpPage(data ui.TemplateData, signup vm.UserSignupForm) {
+	<form action="/user/signup" method="POST" novalidate>
+		<!-- Include the CSRF token -->
+		<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+		<div>
+			<label>Name:</label>
+			if signup.Validator.FieldErrors["name"] != "" {
+				<label class="error">{ signup.Validator.FieldErrors["name"] }</label>
+			}
+			<input type="text" name="name" value={ signup.Name }/>
+		</div>
+		<div>
+			<label>Email:</label>
+			if signup.Validator.FieldErrors["email"] != "" {
+				<label class="error">{ signup.Validator.FieldErrors["email"] }</label>
+			}
+			<input type="email" name="email" value={ signup.Email }/>
+		</div>
+		<div>
+			<label>Password:</label>
+			if signup.Validator.FieldErrors["password"] != "" {
+				<label class="error">{ signup.Validator.FieldErrors["password"] }</label>
+			}
+			<input type="password" name="password"/>
+		</div>
+		<div>
+			<input type="submit" value="Signup"/>
+		</div>
+	</form>
+}

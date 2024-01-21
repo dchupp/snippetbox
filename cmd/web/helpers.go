@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"errors"
-	"fmt"
 	"net/http"
 	"runtime/debug"
 	"time"
@@ -42,28 +40,8 @@ func (app *application) clientError(w http.ResponseWriter, status int) {
 func (app *application) notFound(w http.ResponseWriter) {
 	app.clientError(w, http.StatusNotFound)
 }
-func (app *application) render(w http.ResponseWriter, r *http.Request, status int, page string, data ui.TemplateData) {
-	ts, ok := app.templateCache[page]
-	if !ok {
-		err := fmt.Errorf("the template %s does not exist", page)
-		app.serverError(w, r, err)
-		return
-	}
 
-	buf := new(bytes.Buffer)
 
-	err := ts.ExecuteTemplate(buf, "base", data)
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-
-	// If the template is written to the buffer without any errors, we are safe
-	// to go ahead and write the HTTP status code to http.ResponseWriter.
-	w.WriteHeader(status)
-
-	buf.WriteTo(w)
-}
 func (app *application) decodePostForm(r *http.Request, dst any) error {
 	// Call ParseForm() on the request, in the same way that we did in our
 	// createSnippetPost handler.

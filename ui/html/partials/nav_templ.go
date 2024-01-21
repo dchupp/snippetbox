@@ -59,7 +59,15 @@ func NavBar(data ui.TemplateData) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("--><input type=\"hidden\" name=\"csrf_token\" value=\"{data.CSRFToken}\"> <button>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("--><input type=\"hidden\" name=\"csrf_token\" value=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(data.CSRFToken))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"> <button>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

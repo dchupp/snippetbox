@@ -7,13 +7,11 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"text/template"
 	"time"
 
 	"github.com/alexedwards/scs/mysqlstore"
 	"github.com/alexedwards/scs/v2"
 	"github.com/dchupp/snippetbox/internal/models"
-	"github.com/dchupp/snippetbox/ui"
 	"github.com/go-playground/form/v4"
 	_ "github.com/go-sql-driver/mysql" // New import
 )
@@ -22,7 +20,6 @@ type application struct {
 	logger         *slog.Logger
 	snippets       models.SnippetModelInterface // Use our new interface type.
 	users          models.UserModelInterface    // Use our new interface type.
-	templateCache  map[string]*template.Template
 	formDecoder    *form.Decoder
 	sessionManager *scs.SessionManager
 }
@@ -43,7 +40,7 @@ func main() {
 	}
 	defer db.Close()
 	// Initialize a new template cache...
-	templateCache, err := ui.NewTemplateCache()
+	// templateCache, err := ui.NewTemplateCache()
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
@@ -57,7 +54,6 @@ func main() {
 		logger:         logger,
 		snippets:       &models.SnippetModel{DB: db},
 		users:          &models.UserModel{DB: db},
-		templateCache:  templateCache,
 		formDecoder:    formDecoder,
 		sessionManager: sessionManager,
 	}

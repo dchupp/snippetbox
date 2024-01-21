@@ -16,7 +16,7 @@ templ HomePage(data ui.TemplateData) {
 		for _, item := range data.Snippets {
 			<tr>
 				<!-- Use the new clean URL style-->
-				<td><a href="/snippet/view/{{.ID}}">{ item.Title }</a></td>
+				<td><a href={ templ.URL("/snippet/view/" + strconv.Itoa(item.ID)) }>{ item.Title }</a></td>
 				<td>{ ui.HumanDate(item.Created) }</td>
 				<td>#{ strconv.Itoa(item.ID) }</td>
 			</tr>
