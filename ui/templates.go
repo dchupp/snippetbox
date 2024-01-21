@@ -1,4 +1,4 @@
-package main
+package ui
 
 import (
 	"io/fs"
@@ -7,14 +7,13 @@ import (
 	"time"
 
 	"github.com/dchupp/snippetbox/internal/models"
-	"github.com/dchupp/snippetbox/ui"
 )
 
 // Define a templateData type to act as the holding structure for
 // any dynamic data that we want to pass to our HTML templates.
 // At the moment it only contains one field, but we'll add more
 // to it as the build progresses.
-type templateData struct {
+type TemplateData struct {
 	CurrentYear     int
 	Snippet         models.Snippet
 	Snippets        []models.Snippet
@@ -27,10 +26,10 @@ type templateData struct {
 
 // Create a humanDate function which returns a nicely formatted string
 // representation of a time.Time object.
-func humanDate(t time.Time) string {
-	    if t.IsZero() {
-        return ""
-    }
+func HumanDate(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
 	return t.Format("02 Jan 2006 at 15:04")
 }
 
@@ -38,17 +37,17 @@ func humanDate(t time.Time) string {
 // essentially a string-keyed map which acts as a lookup between the names of our
 // custom template functions and the functions themselves.
 var functions = template.FuncMap{
-	"humanDate": humanDate,
+	"humanDate": HumanDate,
 }
 
-func newTemplateCache() (map[string]*template.Template, error) {
+func NewTemplateCache() (map[string]*template.Template, error) {
 	cache := map[string]*template.Template{}
 
 	// Use fs.Glob() to get a slice of all filepaths in the ui.Files embedded
 	// filesystem which match the pattern 'html/pages/*.tmpl'. This essentially
 	// gives us a slice of all the 'page' templates for the application, just
 	// like before.
-	pages, err := fs.Glob(ui.Files, "html/pages/*.go.tmpl")
+	pages, err := fs.Glob(Files, "html/pages/*.go.tmpl")
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +65,7 @@ func newTemplateCache() (map[string]*template.Template, error) {
 
 		// Use ParseFS() instead of ParseFiles() to parse the template files
 		// from the ui.Files embedded filesystem.
-		ts, err := template.New(name).Funcs(functions).ParseFS(ui.Files, patterns...)
+		ts, err := template.New(name).Funcs(functions).ParseFS(Files, patterns...)
 		if err != nil {
 			return nil, err
 		}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -8,6 +9,9 @@ import (
 
 	"github.com/dchupp/snippetbox/internal/models"
 	"github.com/dchupp/snippetbox/internal/validator"
+	layout "github.com/dchupp/snippetbox/ui/html/layouts"
+	page "github.com/dchupp/snippetbox/ui/html/pages"
+
 	"github.com/julienschmidt/httprouter" // New import
 )
 
@@ -23,8 +27,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 	data := app.newTemplateData(r)
 	data.Snippets = snippets
-
-	app.render(w, r, http.StatusOK, "home.go.tmpl", data)
+	layout.MainLayout("Home", data, page.HomePage(data)).Render(context.Background(), w)
 }
 
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {

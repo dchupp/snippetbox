@@ -1,0 +1,9 @@
+package ui
+
+import "strconv"
+
+templ BasicFooter(year int) {
+	<footer>
+		Powered by <a href="https://golang.org/">Go</a> in { strconv.Itoa(year) }
+	</footer>
+}

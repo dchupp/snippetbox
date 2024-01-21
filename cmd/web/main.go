@@ -13,6 +13,7 @@ import (
 	"github.com/alexedwards/scs/mysqlstore"
 	"github.com/alexedwards/scs/v2"
 	"github.com/dchupp/snippetbox/internal/models"
+	"github.com/dchupp/snippetbox/ui"
 	"github.com/go-playground/form/v4"
 	_ "github.com/go-sql-driver/mysql" // New import
 )
@@ -42,7 +43,7 @@ func main() {
 	}
 	defer db.Close()
 	// Initialize a new template cache...
-	templateCache, err := newTemplateCache()
+	templateCache, err := ui.NewTemplateCache()
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)

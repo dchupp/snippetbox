@@ -15,12 +15,13 @@ import (
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/dchupp/snippetbox/internal/models/mocks"
+	"github.com/dchupp/snippetbox/ui"
 	"github.com/go-playground/form/v4"
 )
 
 func newTestApplication(t *testing.T) *application {
 	// Create an instance of the template cache.
-	templateCache, err := newTemplateCache()
+	templateCache, err := ui.NewTemplateCache()
 	if err != nil {
 		t.Fatal(err)
 	}

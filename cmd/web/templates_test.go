@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/dchupp/snippetbox/internal/assert"
+	"github.com/dchupp/snippetbox/ui"
 )
 
 func TestHumanDate(t *testing.T) {
@@ -32,7 +33,7 @@ func TestHumanDate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hd := humanDate(tt.tm)
+			hd := ui.HumanDate(tt.tm)
 
 			// Use the new assert.Equal() helper to compare the expected and
 			// actual values.
